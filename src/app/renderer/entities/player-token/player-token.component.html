@@ -1,0 +1,19 @@
+<ng-template #template>
+    <svg:circle 
+        stroke-width="0.005"
+        class="draggable"
+        (pointerdown)="down($event)"
+        [attr.r]="0.03" [attr.cx]="0" [attr.cy]="0" 
+        [attr.fill]="colorLookup[entity.data.color].fill"
+        [attr.stroke]="colorLookup[entity.data.color].stroke">
+    </circle>
+    <svg:text class="pass-through" 
+            dominant-baseline="middle" 
+            text-anchor="middle" 
+            font-size="0.027" 
+            y="0.002"
+            [attr.fill]="colorLookup[entity.data.color].stroke"
+            font-family="Arial, Helvetica, sans-serif">
+        {{ entity.data.name }}
+    </text>
+</ng-template>

@@ -1,0 +1,18 @@
+<ng-template #template>
+    <svg:rect stroke-width="0.004" stroke="darkorange" fill="black" x="-0.2" width="0.4" height="0.015">
+    </rect>
+    <svg:rect stroke-width="0.004" stroke="none" fill="lightyellow"  x="-0.2" [attr.width]="entity.data.progress * 0.4" height="0.015">
+    </rect>
+    <svg:text
+            x=".2"
+            text-anchor="end"
+            font-size="0.027" 
+            y="0.03"
+            fill="white"
+            paint-order="stroke"
+            stroke-width="0.005"
+            stroke="darkorange"
+            font-family="Arial, Helvetica, sans-serif">
+            {{ entity.data.label }}
+    </text>
+</ng-template>

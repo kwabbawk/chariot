@@ -1,0 +1,22 @@
+<ng-template #entityTemplate let-entity>
+    <svg:g [attr.opacity]="entity.opacity ?? 1" [attr.transform]="'translate(' + entity.x + ' ' + entity.y + ') rotate(' + (entity.rotation ?? 0) + ' 0 0)'" >
+        <ng-container *ngComponentOutlet="entity.component; inputs: { entity, viewSvg: svg }">
+        </ng-container>
+        <ng-container *ngTemplateOutlet="entity.template;">
+        </ng-container>
+        @for (subEntity of entity.subEntities; track subEntity) {
+            <ng-container *ngTemplateOutlet="entityTemplate; context: {$implicit: subEntity}">
+            </ng-container>
+        }
+    </svg:g>
+</ng-template>
+<div class="view">
+    <div style="border: solid black; display: flex; flex-grow: 1;">
+        <svg #svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="-.5 -.5 1 1" stroke-width="0.007" (mousedown)="$event.preventDefault()">
+            @for (entity of entities; track entity) {
+                <ng-container *ngTemplateOutlet="entityTemplate; context: {$implicit: entity}">
+                </ng-container>
+            }
+        </svg>
+    </div>
+</div>

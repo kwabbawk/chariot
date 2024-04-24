@@ -1,0 +1,39 @@
+<ng-template>
+    <svg:g>
+        @if(entity.data.number; as num) {
+            <ng-template #bundle let-n let-inverseY="inverseY">
+                <ng-template #dot let-offset>
+                    <circle r="0.007" [attr.fill]="num % 2 == 0 ? 'red': 'blue'" [attr.cx]="offset.x" [attr.cy]="offset.y ">
+                    </circle>
+                </ng-template>
+                @for (offset of getLcPositions(n); track $index;) {
+                    <ng-container *ngTemplateOutlet="dot; context: {$implicit: offset}">
+                    </ng-container>
+                }
+            </ng-template>
+            
+            @if (num <= 4) {
+                <ng-container *ngTemplateOutlet="bundle; context: {$implicit: num}">
+                </ng-container>
+            } @else if (num == 6) {
+                <g transform="translate(-.0175 0)">
+                    <ng-container *ngTemplateOutlet="bundle; context: {$implicit: 3}">
+                    </ng-container>
+                </g>
+                <g transform="translate(.0175 0) rotate(180)">
+                    <ng-container *ngTemplateOutlet="bundle; context: {$implicit: 3}">
+                    </ng-container>
+                </g>
+            } @else {
+                <g transform="translate(-.02 0)">
+                    <ng-container *ngTemplateOutlet="bundle; context: {$implicit: num - 4}">
+                    </ng-container>
+                </g>
+                <g transform="translate(.02 0)">
+                    <ng-container *ngTemplateOutlet="bundle; context: {$implicit: 4}">
+                    </ng-container>
+                </g>
+            }
+        }
+    </g>
+</ng-template>
