@@ -4,6 +4,7 @@ import { getEntityByRef } from "./game";
 import { TEntity } from "../renderer/entities/entity";
 import { CircleConfig } from "../renderer/entities/circle-shape/circle-shape.component";
 import { RectShapeData } from "../renderer/entities/rect-shape/rect-shape.component";
+import { vectorSubs, vectorLen, vectorAdd, vectorMult } from "./vector";
 
 export interface CastBarConfig {
     entity: EntityRef;
@@ -71,10 +72,12 @@ export interface RunControl {
 }
 
 export interface EntityRef {
+    attachedTo?: EntityRef;
     x: number;
     y: number;
     rotation?: number;
     opacity?: number;
+    name?: string;
 }
 
 export interface SetupControl {
@@ -163,16 +166,13 @@ export class p9s implements Encounter {
         
         const iceBlocks = [] as EntityRef[];
         
-        const circleOffset = 0.5;
+        const circleOffset = Math.random() < 0.5 ? 0.0 : 0.5;
+        const clockDirFactor = Math.random() < 0.5 ? 1 : -1;
         
-        const lcMarkers = [] as EntityRef[];
-        
-        const kickTime = 2500;
-        const jumpTime = 2500;
         
         for (let i = 0; i < 4; i++) {
             const iceBlock = rc.createShapeRect(iceBlockConfig);
-            const rad = Math.PI * 2 * ((i+circleOffset) / 4);
+            const rad = Math.PI * 2 * (((i * clockDirFactor)+circleOffset) / 4);
             const dist = 0.46;
             rc.placeEntity(iceBlock, {
                 x: Math.sin(rad) * dist,
@@ -215,7 +215,7 @@ export class p9s implements Encounter {
         
         for (let i = 0; i < 4; i++) {
             const ball = rc.createShapeCircle(ballCircleConfig);
-            const rad = Math.PI * 2 * ((i+circleOffset) / 4);
+            const rad = Math.PI * 2 * (((i*clockDirFactor)+circleOffset) / 4);
             const dist = 0.36;
             rc.placeEntity(ball, {
                 x: Math.sin(rad) * dist,
@@ -288,6 +288,7 @@ export class p9s implements Encounter {
                 radius: 0.02,
                 stroke: "none"
             });
+            mark.name = "defamation";
             mark.opacity = 0.8;
             rc.attachPlaceEntity(mark, player, {
                 x: 0,
@@ -393,6 +394,7 @@ export class p9s implements Encounter {
                 await rc.wait(500);
                 rc.removeEntity(ballExplosion);
                 const tower = spawnTower();
+                tower.name = "tower";
                 rc.placeEntity(tower, {
                     x: ball.x,
                     y: ball.y
@@ -442,9 +444,12 @@ export class p9s implements Encounter {
             }
             defamation(defPlayers[i]);
             
-            
             await timeline.done;
         }
+        
+        await rc.wait(1000);
+        await rc.moveEntity(boss, {x: 0, y: 0, duration: 1000});
+        
         
         
         
@@ -520,36 +525,4 @@ export class p9s implements Encounter {
     
 }
 
-interface Vector {
-    x: number,
-    y: number
-}
 
-function vectorAdd(a: Vector, b: Vector) {
-    return {
-        x: a.x + b.x,
-        y: a.y + b.y
-    } as Vector;
-}
-
-function vectorLen2(v: Vector) {
-    return v.x * v.x + v.y* v.y;
-}
-
-function vectorLen(v: Vector) {
-    return Math.sqrt(vectorLen2(v));
-}
-
-function vectorSubs(a: Vector, b: Vector) {
-    return {
-        x: a.x - b.x,
-        y: a.y - b.y
-    } as Vector;
-}
-
-function vectorMult(v: Vector, factor: number) {
-    return {
-        x: v.x * factor,
-        y: v.y * factor
-    } as Vector;
-}

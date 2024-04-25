@@ -10,6 +10,7 @@ export enum ColorScheme {
 export interface PlayerTokenData {
   color: ColorScheme;
   name: string;
+  draggable: boolean;
 }
 
 @Component({
@@ -47,27 +48,65 @@ export class PlayerTokenComponent implements AfterViewChecked {
   }
   
   
-  down($event: PointerEvent) {
+  down($event: MouseEvent) {
+    if (!this.entity.data.draggable)
+      return;
     this.dragging=true;
     $event.preventDefault();
   }
   
-  @HostListener('window:pointerup', ['$event'])
-  draggingMouseUp($event: PointerEvent) {
+  touchstart($event: TouchEvent) {
+    if (!this.entity.data.draggable)
+      return;
+    this.dragging=true;
+    $event.preventDefault();
+  }
+  
+  @HostListener('window:touchend', ['$event'])
+  draggingTouchUp($event: TouchEvent) {
     if (!this.dragging)
         return;
+      
+    
       this.dragging = false;
   }
   
-  @HostListener('window:pointermove', ['$event'])
-  moved(e: PointerEvent) {
+  @HostListener('window:mouseup', ['$event'])
+  draggingMouseUp($event: MouseEvent) {
+    if (!this.dragging)
+        return;
+      
+    
+      this.dragging = false;
+  }
+  
+  @HostListener('window:touchmove', ['$event'])
+  touchMoved(e: TouchEvent) {
     if (!this.dragging)
       return;
     
+    this.move({
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY
+    });
+  }
+  
+  @HostListener('window:mousemove', ['$event'])
+  moved(e: MouseEvent) {
+    if (!this.dragging)
+      return;
+    
+    this.move({
+      x: e.x,
+      y: e.y
+    });
+  }
+  
+  move(pos: {x: number, y: number}) {
     const viewRect = this.viewSvg.getBoundingClientRect();
     
-    this.entity.x = this.bound(((e.x - viewRect.x) / viewRect.width) * 1.0 - 0.5, -.5, .5);
-    this.entity.y = this.bound(((e.y - viewRect.y) / viewRect.height) * 1.0 - 0.5, -.5, .5);
+    this.entity.x = this.bound(((pos.x - viewRect.x) / viewRect.width) * 1.0 - 0.5, -.5, .5);
+    this.entity.y = this.bound(((pos.y - viewRect.y) / viewRect.height) * 1.0 - 0.5, -.5, .5);
   }
   
   bound(value: number, lower: number, upper: number) {

@@ -7,6 +7,7 @@ import {MatInputModule} from '@angular/material/input';
 import {MatFormField, MatFormFieldModule} from '@angular/material/form-field';
 import {FormsModule} from '@angular/forms';
 import {MatButtonModule} from '@angular/material/button';
+import { P9sHectorJpAi } from './encounter/npcs/p9s.ai';
 
 @Component({
     selector: 'app-root',
@@ -23,7 +24,9 @@ export class AppComponent {
     r.reset();
     console.log('gogogo!');
     const encounter = GetEncounter();
-    await runGameLoop(r, encounter, this.speed);
+    const ai = new P9sHectorJpAi();
+    
+    await runGameLoop(r, encounter, ai, this.speed);
   }
   
   doTheTest() {

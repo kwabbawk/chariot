@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { ColorScheme, PlayerTokenComponent, PlayerTokenData } from './entities/player-token/player-token.component';
 import { timeout } from 'rxjs';
 import { EnemyTokenComponent, EnemyTokenData } from './entities/enemy-token/enemy-token.component';
+import { EntityLayers } from '../encounter/game';
 
 @Component({
     selector: 'app-renderer',
@@ -61,20 +62,22 @@ export class RendererComponent {
     ];
     
     for (let i = 0; i < 8; i++) {
-      const color = i < 2 
-        ? ColorScheme.Tank
+      const [color, role] = i < 2 
+        ? [ColorScheme.Tank, 'tank']
         : i < 4
-          ? ColorScheme.Healer
-          : ColorScheme.Dps
+          ? [ColorScheme.Healer, 'healer']
+          : [ColorScheme.Dps, 'dps']
       
       const arc = 2 * Math.PI * (i+4) / 8;
       const r = 0.15;
           
       this.entities.unshift({
-        tags: ['player'],
+        tags: ['player', role],
         x: Math.sin(arc) * r,
         y: Math.cos(arc) * r + 0.3,
         component: PlayerTokenComponent,
+        name: names[i],
+        layer: EntityLayers.Player,
         data: {
           color: color,
           name: names[i]
