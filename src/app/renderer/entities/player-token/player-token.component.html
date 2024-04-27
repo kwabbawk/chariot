@@ -4,7 +4,7 @@
         [class.draggable]="entity.data.draggable"
         (mousedown)="down($event)"
         (touchstart)="touchstart($event)"
-        [attr.r]="0.03" [attr.cx]="0" [attr.cy]="0" 
+        [attr.r]="entity.data.draggable ? 0.05 : 0.03" [attr.cx]="0" [attr.cy]="0" 
         [attr.fill]="colorLookup[entity.data.color].fill"
         [attr.stroke]="colorLookup[entity.data.color].stroke">
     </circle>

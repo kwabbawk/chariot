@@ -29,9 +29,6 @@ export class RendererComponent {
   
   constructor() {
     
-    
-    this.reset();
-    
   }
   
   reset() {

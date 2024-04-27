@@ -1,10 +1,17 @@
 <div>
   <app-renderer #renderer></app-renderer>
+  <hr>
   <div>
     <mat-form-field class="example-full-width">
       <mat-label>Speed</mat-label>
-      <input type="number" matInput [(ngModel)]="speed">
+      <input [disabled]="running" step="0.1" min="0.1" type="number" matInput [(ngModel)]="speed">
     </mat-form-field>
-    <button mat-flat-button color="primary" (click)="start(renderer)">Start</button>
+    <button mat-flat-button color="primary" [disabled]="running" (click)="start(renderer)">
+      @if(running) {
+        <mat-spinner diameter="20"></mat-spinner>
+      } @else {
+        Start
+      }
+    </button>
   </div>
 </div>

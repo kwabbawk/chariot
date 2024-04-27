@@ -400,19 +400,25 @@ export class p9s implements Encounter {
                     y: ball.y
                 });
                 await timeline.syncedExplosions;
-                const towerExplosion = rc.createShapeCircle({
-                    radius: 2,
-                    fill: "orange",
-                    stroke: "orange"
-                });
-                towerExplosion.opacity = 0.5;
-                rc.placeEntity(towerExplosion, {
-                    x: tower.x,
-                    y: tower.y 
-                });
+                
+                
+                const playersOnTower = players.filter(x => vectorLen(vectorSubs(x, tower)) <= 0.04);
                 rc.removeEntity(tower);
-                await rc.wait(500);
-                rc.removeEntity(towerExplosion);
+                if (playersOnTower.length == 0) {
+                    const towerExplosion = rc.createShapeCircle({
+                        radius: 2,
+                        fill: "orange",
+                        stroke: "orange"
+                    });
+                    towerExplosion.opacity = 0.5;
+                    rc.placeEntity(towerExplosion, {
+                        x: tower.x,
+                        y: tower.y 
+                    });
+                    await rc.wait(500);
+                    rc.removeEntity(towerExplosion);
+                }
+                
             }
             
             async function defamation(player: EntityRef) {
