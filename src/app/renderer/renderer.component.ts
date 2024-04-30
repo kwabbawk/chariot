@@ -36,7 +36,6 @@ export class RendererComponent {
     this.createFullParty();
     // this.createBoss();
     
-    console.log(this.entities);
   }
   
   createBoss() {

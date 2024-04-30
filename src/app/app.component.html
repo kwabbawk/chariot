@@ -2,16 +2,31 @@
   <app-renderer #renderer></app-renderer>
   <hr>
   <div>
-    <mat-form-field class="example-full-width">
+    <mat-form-field>
       <mat-label>Speed</mat-label>
-      <input [disabled]="running" step="0.1" min="0.1" type="number" matInput [(ngModel)]="speed">
+      <input [disabled]="playbackControl?.isRunning ?? false" step="0.1" min="0.1" type="number" matInput [(ngModel)]="speed">
     </mat-form-field>
-    <button mat-flat-button color="primary" [disabled]="running" (click)="start(renderer)">
-      @if(running) {
-        <mat-spinner diameter="20"></mat-spinner>
+  </div>
+  <div style="flex-direction: row; display: flex; justify-content: center;">
+    <div style="width: 200px; display: flex; flex-direction: row; justify-content: space-between;">
+      @if (!playbackControl) {
+        <button mat-fab (click)="start(renderer)">
+          <mat-icon>play_arrow</mat-icon>
+        </button>
       } @else {
-        Start
+        @if (playbackControl.isRunning) {
+          <button mat-fab (click)="playbackControl.pause()">
+            <mat-icon>pause</mat-icon>
+          </button>
+        } @else {
+          <button mat-fab (click)="playbackControl.setPlaybackspeed(speed); playbackControl.resume()">
+            <mat-icon>play_arrow</mat-icon>
+          </button>
+        }
+        <button mat-fab (click)="playbackControl.stop()">
+          <mat-icon>stop</mat-icon>
+        </button>
       }
-    </button>
+    </div>
   </div>
 </div>

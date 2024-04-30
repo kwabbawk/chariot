@@ -20,6 +20,7 @@ function completionPromiseOf<T>(o: Observable<T>): Promise<void> {
     });
 }
 
+
 export function getEntityByRef(entityRef: EntityRef) {
     return entityRef as Entity;
 }
@@ -41,9 +42,18 @@ export function insertLayered(arr: Entity[], element: Entity) {
     }
 }
 
-export async function runGameLoop(renderer: RendererComponent, encounter: Encounter, ai: NpcAi, speed = 1) {
+export interface PlaybackControl {
+    stop(): void;
+    resume(): void;
+    pause(): void;
+    get isRunning(): boolean;
+    setPlaybackspeed(speed: number): void;
+}
+
+
+export function runGameLoop(renderer: RendererComponent, encounter: Encounter, ai: NpcAi, speed = 1) {
     const phases = [] as Runnable[];
-    encounter.Setup({
+    encounter.setup({
         addPhase: (p) => phases.push(p),
         addEnemy: c => {
             const entity = {
@@ -71,11 +81,20 @@ export async function runGameLoop(renderer: RendererComponent, encounter: Encoun
     const castBarEvents = new Subject<CastBarEvent>();
     const entityEvents = new Subject<EntityEvent>();
     
+    let currentTimeSegmentStartedAt = new Date().getTime();
+    let passedEncounterTime = 0;
+    let isCurrentTimeSegmentRunning = true;
+    
     
     const runControl: RunControl = {
         gameTicks,
-        wait: time => new Promise(resolve => setTimeout(resolve, time / speed)),
-        getTime: () => new Date().getTime() * speed,
+        wait: wait,
+        getTime: () => {
+            const currentPassedEncounterTime = isCurrentTimeSegmentRunning 
+                ? (new Date().getTime() - currentTimeSegmentStartedAt) * speed 
+                : 0;
+            return passedEncounterTime + currentPassedEncounterTime;
+        },
         castBar: castBar,
         createShapeRect: x => createShapeRect(x),
         createShapeCircle: x => createShapeCircle(x),
@@ -183,7 +202,6 @@ export async function runGameLoop(renderer: RendererComponent, encounter: Encoun
                 duration = c.duration;
             }
             
-            console.log('move duration', duration);
             
             await runControl.transitionObjectValues(entityRef, {
                 duration,
@@ -194,6 +212,39 @@ export async function runGameLoop(renderer: RendererComponent, encounter: Encoun
             });
         },
     }
+    
+    const playbackResume$ = new Subject<void>();
+    const playbackStop$ = new Subject<void>();
+    const playbackPause$ = new Subject<void>();
+    
+    
+    const playbackControl: PlaybackControl = {
+        resume() {
+            if (isCurrentTimeSegmentRunning)
+                return;
+            isCurrentTimeSegmentRunning = true;
+            currentTimeSegmentStartedAt = new Date().getTime();
+            playbackResume$.next();
+        },
+        pause() {
+            if (!isCurrentTimeSegmentRunning)
+                return;
+            passedEncounterTime = runControl.getTime();
+            isCurrentTimeSegmentRunning = false;
+            playbackPause$.next();
+        },
+        stop() {
+            playbackStop$.next();
+        },
+        get isRunning() {
+            return isCurrentTimeSegmentRunning;
+        },
+        setPlaybackspeed(newSpeed: number) {
+            if (isCurrentTimeSegmentRunning)
+                throw new Error('can\'t change playback speed while running!');
+            speed = newSpeed;
+        },
+    };
     
     function moveEntity(entityRef: EntityRef, c: MoveEntityConfig): Promise<void> {
         const startTime = runControl.getTime();
@@ -300,7 +351,36 @@ export async function runGameLoop(renderer: RendererComponent, encounter: Encoun
         );
         return completionPromiseOf(obs);
     }
-       
+    
+    function wait(time: number, keyword?: string): Promise<void> {
+        return new Promise(resolve => {
+            const resolveAfterWait = (waitTime: number) => {
+                const startTime = runControl.getTime();
+                const finished = new Subject<void>();
+                const done = () => {
+                    finished.next();
+                    resolve();
+                };
+                const timeoutHandle = setTimeout(done, waitTime / speed);
+                
+                playbackPause$.pipe(takeUntil(finished), take(1)).subscribe({
+                    next: () => {
+                        clearTimeout(timeoutHandle);
+                        const pauseTime = runControl.getTime();
+                        const remainingTime = waitTime - (pauseTime - startTime);
+                        playbackResume$.pipe(take(1)).subscribe({
+                            next: () => {
+                                resolveAfterWait(remainingTime);
+                            }
+                        });
+                    }
+                });
+                
+            };
+            
+            resolveAfterWait(time);
+        });
+    }
     
     async function castBar(c: CastBarConfig): Promise<void> {
         const entity = c.entity as Entity;
@@ -376,10 +456,23 @@ export async function runGameLoop(renderer: RendererComponent, encounter: Encoun
     
     ai.setup(aiControl);
     
-    console.log('encounter start!');
-    await run(phases);
-    console.log('encounter done!');
     
-    encounterEnd.complete();
+    
+    const runningEncounter = (async () => {
+        console.log('encounter start!');
+        await run(phases);
+        encounterEnd.complete();
+        console.log('encounter done!');
+    })();
+    
+    return {
+        runningEncounter,
+        playbackControl
+    };
+    
+    
+    
+    
+    
 }
 

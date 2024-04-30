@@ -59,7 +59,7 @@ export interface RunControl {
     
     getTime(): number;
     castBar(c: CastBarConfig): Promise<void>;
-    wait(time: number): Promise<void>;
+    wait(time: number, keyword?: string): Promise<void>;
     
     gameTicks: Observable<void>;
     
@@ -93,7 +93,7 @@ export interface Runnable {
 }
 
 export interface Encounter {
-    Setup(c: SetupControl): void;
+    setup(c: SetupControl): void;
 }
 
 export function GetEncounter() {
@@ -125,7 +125,7 @@ function shuffle<T>(array: T[]) {
 
 export class p9s implements Encounter {
     
-    Setup(c: SetupControl): void {
+    setup(c: SetupControl): void {
         
         const boss = c.addEnemy({
             name: "Boss",
@@ -310,7 +310,7 @@ export class p9s implements Encounter {
             const timeline = {
                 showNextDefamation: rc.wait(750),
                 kickoff: rc.wait(1000),
-                ballCollision: rc.wait(1500),
+                ballCollision: rc.wait(1500, "ball collision"),
                 jumpToPlayer: rc.wait(2400),
                 syncedExplosions: rc.wait(2750),
                 done: rc.wait(3500),
