@@ -1,16 +1,18 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { RendererComponent } from "./renderer/renderer.component";
-import { GetEncounter, RunControl, RunFunc } from './encounter/p9s';
-import { PlaybackControl, runGameLoop } from './encounter/game';
+import { RunFunc } from "./encounter/interface/Encounter";
+import { RunControl } from "./encounter/interface/RunControl";
+import { PlaybackControl, setupEncouter } from './encounter/game';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormField, MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule, MatIconButton } from '@angular/material/button';
-import { P9sHectorJpAi } from './encounter/npcs/p9s.ai';
+import { P9sHectorJpAi } from './encounter/encounters/p9s.ai';
 import { ProgressSpinnerMode, MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatIconModule } from '@angular/material/icon';
+import { GetEncounter } from './encounter/encounters/p9s';
 
 @Component({
   selector: 'app-root',
@@ -38,7 +40,7 @@ export class AppComponent {
     const encounter = GetEncounter();
     const ai = new P9sHectorJpAi();
 
-    const { playbackControl, runningEncounter } = runGameLoop(r, encounter, ai, this.speed);
+    const { playbackControl, runningEncounter } = setupEncouter(r, encounter, ai, this.speed);
     this.playbackControl = playbackControl;
     await runningEncounter;
     this.playbackControl = undefined;
@@ -58,7 +60,7 @@ export class AppComponent {
     const getPassedTime = () => (new Date().getTime() - start) / 1000;
     
     
-    const {playbackControl, runningEncounter} = runGameLoop(r, {
+    const {playbackControl, runningEncounter} = setupEncouter(r, {
       setup(c) {
         c.addPhase({
           name: "testPhase",

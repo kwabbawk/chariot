@@ -1,111 +1,10 @@
-import { Observable } from "rxjs";
-import { LimitCutConfig } from "../renderer/entities/limit-cut-icon/limit-cut-icon.component";
-import { getEntityByRef } from "./game";
-import { TEntity } from "../renderer/entities/entity";
-import { CircleConfig } from "../renderer/entities/circle-shape/circle-shape.component";
-import { RectShapeData } from "../renderer/entities/rect-shape/rect-shape.component";
-import { vectorSubs, vectorLen, vectorAdd, vectorMult } from "./vector";
-
-export interface CastBarConfig {
-    entity: EntityRef;
-    label: string;
-    duration: number;
-}
-
-export interface EntityConfig<TData> {
-    x: number;
-    y: number;
-    rotation?: number;
-    data: TData;
-}
-
-export interface BaseShapeRectConfig {
-    x: number; 
-    y: number; 
-    width: number; 
-    height: number; 
-    fill: string;
-    stroke?: string
-}
-
-export interface BaseShapeCircleConfig {
-    radius: number; 
-    fill: string;
-    stroke: string;
-}
-
-export interface FadeConfig {
-    duration: number
-}
-
-export interface MoveEntityConfig {
-    x: number; 
-    y: number; 
-    rotation?: number; 
-    duration?: number; 
-}
-
-export interface TransitionConfig<T> {
-    duration: number;
-    targetValues: Partial<T>;
-}
-
-export interface RunControl {
-    moveEntity(entityRef: EntityRef, c: MoveEntityConfig): Promise<void>;
-    getEntitiesByTags(tags: string[]): EntityRef[];
-    fadeIn(entity: EntityRef, config: FadeConfig): Promise<void>;
-    
-    transitionObjectValues<T>(entity: T, config: TransitionConfig<T>): Promise<void>;
-    
-    getTime(): number;
-    castBar(c: CastBarConfig): Promise<void>;
-    wait(time: number, keyword?: string): Promise<void>;
-    
-    gameTicks: Observable<void>;
-    
-    createShapeRect(c: BaseShapeRectConfig): EntityRef;
-    createShapeCircle(c: BaseShapeCircleConfig): EntityRef;
-    createLimitCutIcon(c: LimitCutConfig): EntityRef;
-    placeEntity(entity: EntityRef, c: {x: number, y: number, rotation?: number}): void;
-    attachPlaceEntity(entity: EntityRef, host: EntityRef, c: {x: number, y: number, rotation?: number}): void;
-    removeEntity(entity: EntityRef): void;
-}
-
-export interface EntityRef {
-    attachedTo?: EntityRef;
-    x: number;
-    y: number;
-    rotation?: number;
-    opacity?: number;
-    name?: string;
-}
-
-export interface SetupControl {
-    addEnemy(c: EnemyConfig): EntityRef;
-    addPhase(p: Runnable): void;
-}
-
-export type RunFunc = (rc: RunControl) => Promise<void>;
-
-export interface Runnable {
-    name: string;
-    run: Runnable[] | RunFunc
-}
-
-export interface Encounter {
-    setup(c: SetupControl): void;
-}
-
-export function GetEncounter() {
-    return new p9s() as Encounter;
-}
-
-export interface EnemyConfig {
-     name: string;
-     stroke: string;
-     fill: string;
-     size: number;
-}
+import { TEntity } from "../../renderer/entities/entity";
+import { CircleConfig } from "../../renderer/entities/circle-shape/circle-shape.component";
+import { RectShapeData } from "../../renderer/entities/rect-shape/rect-shape.component";
+import { vectorSubs, vectorLen, vectorAdd, vectorMult } from "../../lib/vector";
+import { SetupControl } from "../interface/SetupControl";
+import { Encounter, EnemyConfig, Runnable, EntityRef } from "../interface/Encounter";
+import { RunControl } from "../interface/RunControl";
 
 function shuffle<T>(array: T[]) {
     let currentIndex = array.length,  randomIndex;
@@ -122,6 +21,10 @@ function shuffle<T>(array: T[]) {
         array[randomIndex], array[currentIndex]];
     }
 };
+
+export function GetEncounter() {
+    return new p9s() as Encounter;
+}
 
 export class p9s implements Encounter {
     

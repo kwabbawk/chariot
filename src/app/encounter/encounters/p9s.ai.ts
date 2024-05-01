@@ -1,6 +1,6 @@
 import { Observable, combineLatest, filter, first, map, skip, take, toArray } from "rxjs";
-import { EntityRef } from "../p9s";
-import { Vector, vectorAdd, vectorMult, vectorSubs } from "../vector";
+import { EntityRef } from "../interface/Encounter";
+import { Vector, vectorAdd, vectorMult, vectorSubs } from "../../lib/vector";
 
 export interface NpcAi {
     setup(c: AiControl): void;
