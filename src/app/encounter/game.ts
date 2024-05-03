@@ -1,4 +1,4 @@
-import { Observable, Subject, interval, lastValueFrom, map, share, startWith, take, takeUntil, takeWhile, tap } from "rxjs";
+import { Observable, Subject, interval, lastValueFrom, map, of, share, startWith, switchMap, take, takeUntil, takeWhile, tap, timer } from "rxjs";
 import { CastBarComponent, CastBarData } from "../renderer/entities/cast-bar/cast-bar.component";
 import { EnemyTokenComponent, EnemyTokenData } from "../renderer/entities/enemy-token/enemy-token.component";
 import { Entity, TEntity } from "../renderer/entities/entity";
@@ -16,7 +16,7 @@ import { SetupControl } from "./interface/SetupControl";
 import { RectShapeComponent, RectShapeData } from "../renderer/entities/rect-shape/rect-shape.component";
 import { CircleConfig, CircleShapeComponent } from "../renderer/entities/circle-shape/circle-shape.component";
 import { LimitCutConfig, LimitCutIconComponent } from "../renderer/entities/limit-cut-icon/limit-cut-icon.component";
-import { AiControl, CastBarEvent, CastBarEventType, EntityEvent, EntityEventType, NpcAi } from "./encounters/p9s.ai";
+import { AiControl, CastBarEvent, CastBarEventType, EntityEvent, EntityEventType, MoveConfig, NpcAi } from "./encounters/p9s.ai";
 import { vectorLen } from "../lib/vector";
 import { PlayerTokenData } from "../renderer/entities/player-token/player-token.component";
 
@@ -110,7 +110,14 @@ class GameRunControl implements RunControl {
     } 
     
     public wait(time: number, keyword?: string): Promise<void> {
-        return new Promise(resolve => {
+        
+        
+        
+        
+        
+        
+        
+        return new Promise((resolve, reject) => {
             const resolveAfterWait = (waitTime: number) => {
                 const startTime = this.getTime();
                 const finished = new Subject<void>();
@@ -118,6 +125,11 @@ class GameRunControl implements RunControl {
                     finished.next();
                     resolve();
                 };
+                const stop = () => {
+                    finished.next();
+                    reject();
+                }
+                
                 const timeoutHandle = setTimeout(done, waitTime / this.ctx.speed);
                 
                 this.ctx.playbackPause$.pipe(takeUntil(finished), take(1)).subscribe({
@@ -125,7 +137,7 @@ class GameRunControl implements RunControl {
                         clearTimeout(timeoutHandle);
                         const pauseTime = this.getTime();
                         const remainingTime = waitTime - (pauseTime - startTime);
-                        this.ctx.playbackResume$.pipe(take(1)).subscribe({
+                        this.ctx.playbackResume$.pipe(takeUntil(finished), take(1)).subscribe({
                             next: () => {
                                 resolveAfterWait(remainingTime);
                             }
@@ -365,6 +377,103 @@ class GameRunControl implements RunControl {
     }
 }
 
+class GameAiControl implements AiControl {
+    constructor(private ctx: RunningEncounterContext, private runControl: RunControl) {
+    }
+    
+    wait(duration: number) {
+        return this.runControl.wait(duration);
+    }
+    
+    public get castBarEvents(): Observable<CastBarEvent> {
+        return this.ctx.castBarEvents$.pipe(takeUntil(this.ctx.encounterEnd));
+    }
+    
+    public get entityEvents() {
+        return this.ctx.entityEvents$.pipe(takeUntil(this.ctx.encounterEnd));
+    }
+    
+    public get gameTicks() {
+        return this.ctx.gameTicks;
+    }
+    
+    public getPlayers() {
+        return this.runControl.getEntitiesByTags(["player"]);
+    }
+    
+    public getNpcs() {
+        return this.runControl.getEntitiesByTags(["player", "npc"]);
+    }
+    
+    public hasControl(entity: EntityRef) {
+        return getEntityByRef(entity).tags.includes("npc");
+    }
+    
+    async moveNpc(entityRef: EntityRef, c: MoveConfig) {
+        // console.log("moving", entityRef, c);
+        if (!this.hasControl(entityRef)) {
+            console.log('ai tried to move non-npc', entityRef);
+            return;
+        }
+        
+        const distance = vectorLen({
+            x: c.x - entityRef.x,
+            y: c.y - entityRef.y
+        });
+        const maxSpeed = 0.75;
+        let duration = 1000 * distance / maxSpeed;
+        if (c.duration && c.duration < duration) {
+            duration = c.duration;
+        }
+        
+        
+        await this.runControl.transitionObjectValues(entityRef, {
+            duration,
+            targetValues: {
+                x: c.x,
+                y: c.y
+            }
+        });
+    }
+}
+
+class GamePlaybackControl implements PlaybackControl {
+    
+    constructor(private ctx: RunningEncounterContext, private runControl: RunControl) {
+    }
+    
+    resume() {
+        if (this.ctx.isCurrentTimeSegmentRunning)
+            return;
+        this.ctx.isCurrentTimeSegmentRunning = true;
+        this.ctx.currentTimeSegmentStartedAt = new Date().getTime();
+        this.ctx.playbackResume$.next();
+    }
+    
+    pause() {
+        if (!this.ctx.isCurrentTimeSegmentRunning)
+            return;
+        this.ctx.passedEncounterTime = this.runControl.getTime();
+        this.ctx.isCurrentTimeSegmentRunning = false;
+        this.ctx.playbackPause$.next();
+    }
+    
+    stop() {
+        this.ctx.playbackStop$.next();
+    }
+    
+    get isRunning() {
+        return this.ctx.isCurrentTimeSegmentRunning;
+    }
+    
+    setPlaybackspeed(newSpeed: number) {
+        if (this.ctx.isCurrentTimeSegmentRunning)
+            throw new Error('can\'t change playback speed while running!');
+        this.ctx.speed = newSpeed;
+    }
+    
+}
+
 
 export function setupEncouter(renderer: RendererComponent, encounter: Encounter, ai: NpcAi, speed = 1) {
     
@@ -417,78 +526,9 @@ export function setupEncouter(renderer: RendererComponent, encounter: Encounter,
     
     const runControl: RunControl = new GameRunControl(ctx);
     
-    const aiControl: AiControl = {
-        wait: (duration) => runControl.wait(duration),
-        castBarEvents: ctx.castBarEvents$.pipe(takeUntil(ctx.encounterEnd)),
-        entityEvents: ctx.entityEvents$.pipe(takeUntil(ctx.encounterEnd)),
-        gameTicks: ctx.gameTicks,
-        getPlayers() {
-            return runControl.getEntitiesByTags(["player"]);
-        },
-        getNpcs() {
-            return runControl.getEntitiesByTags(["player", "npc"]);
-        },
-        hasControl(entity: EntityRef) {
-            return getEntityByRef(entity).tags.includes("npc");
-        },
-        async moveNpc(entityRef, c) {
-            // console.log("moving", entityRef, c);
-            if (!this.hasControl(entityRef)) {
-                console.log('ai tried to move non-npc', entityRef);
-                return;
-            }
-            
-            const distance = vectorLen({
-                x: c.x - entityRef.x,
-                y: c.y - entityRef.y
-            });
-            const maxSpeed = 0.75;
-            let duration = 1000 * distance / maxSpeed;
-            if (c.duration && c.duration < duration) {
-                duration = c.duration;
-            }
-            
-            
-            await runControl.transitionObjectValues(entityRef, {
-                duration,
-                targetValues: {
-                    x: c.x,
-                    y: c.y
-                }
-            });
-        },
-    }
+    const aiControl: AiControl = new GameAiControl(ctx, runControl);
     
-    
-    
-    
-    const playbackControl: PlaybackControl = {
-        resume() {
-            if (ctx.isCurrentTimeSegmentRunning)
-                return;
-            ctx.isCurrentTimeSegmentRunning = true;
-            ctx.currentTimeSegmentStartedAt = new Date().getTime();
-            ctx.playbackResume$.next();
-        },
-        pause() {
-            if (!ctx.isCurrentTimeSegmentRunning)
-                return;
-            ctx.passedEncounterTime = runControl.getTime();
-            ctx.isCurrentTimeSegmentRunning = false;
-            ctx.playbackPause$.next();
-        },
-        stop() {
-            ctx.playbackStop$.next();
-        },
-        get isRunning() {
-            return ctx.isCurrentTimeSegmentRunning;
-        },
-        setPlaybackspeed(newSpeed: number) {
-            if (ctx.isCurrentTimeSegmentRunning)
-                throw new Error('can\'t change playback speed while running!');
-            ctx.speed = newSpeed;
-        },
-    };
+    const playbackControl = new GamePlaybackControl(ctx, runControl);
     
     async function run(runnables: Runnable[]) {
         for (const segment of runnables) {

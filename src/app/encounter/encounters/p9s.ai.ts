@@ -38,9 +38,9 @@ export interface AiControl {
     moveNpc(entityRef: EntityRef, c: MoveConfig): Promise<void>;
     getPlayers(): EntityRef[];
     getNpcs(): EntityRef[];
-    castBarEvents: Observable<CastBarEvent>;
-    entityEvents: Observable<EntityEvent>;
-    gameTicks: Observable<void>;
+    get castBarEvents(): Observable<CastBarEvent>;
+    get entityEvents(): Observable<EntityEvent>;
+    get gameTicks(): Observable<void>;
     
     hasControl(entity: EntityRef): boolean;
 }
