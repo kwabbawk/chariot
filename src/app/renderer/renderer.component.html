@@ -11,7 +11,7 @@
     </svg:g>
 </ng-template>
 <div class="view">
-    <div style="display: flex; flex-grow: 1;">
+    <div style="display: flex; flex-grow: 1;  max-width: 640px;">
         <svg #svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="-.5 -.5 1 1" stroke-width="0.007" (mousedown)="$event.preventDefault()">
             @for (entity of entities; track entity) {
                 <ng-container *ngTemplateOutlet="entityTemplate; context: {$implicit: entity}">
