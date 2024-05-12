@@ -23,7 +23,7 @@
             <mat-icon>play_arrow</mat-icon>
           </button>
         }
-        <button mat-fab (click)="playbackControl.stop()">
+        <button mat-fab (click)="playbackControl.stop(); playbackControl = undefined">
           <mat-icon>stop</mat-icon>
         </button>
       }

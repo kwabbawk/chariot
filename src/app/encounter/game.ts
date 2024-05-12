@@ -1,4 +1,4 @@
-import { Observable, Subject, interval, lastValueFrom, map, of, share, startWith, switchMap, take, takeUntil, takeWhile, tap, timer } from "rxjs";
+import { NEVER, Observable, Subject, interval, lastValueFrom, map, merge, of, share, startWith, switchMap, take, takeUntil, takeWhile, tap, throwError, timer } from "rxjs";
 import { CastBarComponent, CastBarData } from "../renderer/entities/cast-bar/cast-bar.component";
 import { EnemyTokenComponent, EnemyTokenData } from "../renderer/entities/enemy-token/enemy-token.component";
 import { Entity, TEntity } from "../renderer/entities/entity";
@@ -39,6 +39,11 @@ export enum EntityLayers {
     Enemy,
     Effect,
     Player,
+}
+
+class EncounterStoppedError extends Error {
+    
+    public GameErrorType = "EncounterStoppedError";
 }
 
 export function insertLayered(arr: Entity[], element: Entity) {
@@ -112,43 +117,34 @@ class GameRunControl implements RunControl {
     public wait(time: number, keyword?: string): Promise<void> {
         
         
-        
-        
-        
-        
-        
-        return new Promise((resolve, reject) => {
-            const resolveAfterWait = (waitTime: number) => {
-                const startTime = this.getTime();
-                const finished = new Subject<void>();
-                const done = () => {
-                    finished.next();
-                    resolve();
-                };
-                const stop = () => {
-                    finished.next();
-                    reject();
-                }
-                
-                const timeoutHandle = setTimeout(done, waitTime / this.ctx.speed);
-                
-                this.ctx.playbackPause$.pipe(takeUntil(finished), take(1)).subscribe({
-                    next: () => {
-                        clearTimeout(timeoutHandle);
-                        const pauseTime = this.getTime();
-                        const remainingTime = waitTime - (pauseTime - startTime);
-                        this.ctx.playbackResume$.pipe(takeUntil(finished), take(1)).subscribe({
-                            next: () => {
-                                resolveAfterWait(remainingTime);
-                            }
-                        });
-                    }
-                });
-                
-            };
+        const p = new Promise<void>((resolve, reject) => {
+            const startTime = this.getTime();
+            const waitUntilTime = startTime + time;
             
-            resolveAfterWait(time);
+            merge<Observable<0>[]>(
+                this.ctx.playbackResume$.pipe(
+                    startWith(void 0),
+                    map(() => {
+                        const remainingWaitTime = waitUntilTime - this.getTime();
+                        const remainingWaitRealTime = remainingWaitTime / this.ctx.speed;
+                        return timer(remainingWaitRealTime);
+                    })
+                ),
+                this.ctx.playbackPause$.pipe(map(() => NEVER as Observable<0>)),
+                this.ctx.encounterEnd.pipe(map(() => throwError(() => new EncounterStoppedError()) as Observable<0>))
+            )
+            .pipe(
+                switchMap(x => x),
+                take(1)
+            )
+            .subscribe({
+                complete: resolve,
+                error: reject
+            });
         });
+        
+        
+        return p;
     }
     
     public getTime() {
@@ -173,7 +169,7 @@ class GameRunControl implements RunControl {
         } as TEntity<CastBarData>;
         
         const startTime = this.getTime();
-        interval(1000/60).pipe(
+        this.gameTicks.pipe(
             map(x => Math.min(1, (this.getTime() - startTime) / c.duration)),
             takeWhile(x => x < 1, true)
         ).subscribe({
@@ -460,6 +456,7 @@ class GamePlaybackControl implements PlaybackControl {
     
     stop() {
         this.ctx.playbackStop$.next();
+        this.ctx.encounterEnd.next();
     }
     
     get isRunning() {
@@ -565,7 +562,16 @@ export function setupEncouter(renderer: RendererComponent, encounter: Encounter,
     
     const runningEncounter = (async () => {
         console.log('encounter start!');
-        await run(ctx.phases);
+        try {
+            await run(ctx.phases);
+        } catch (e) {
+            if (e instanceof EncounterStoppedError) {
+                console.log('encounter got stopped!');
+            } else {
+                throw e;
+            }
+        }
+        
         ctx.encounterEnd.complete();
         console.log('encounter done!');
     })();
