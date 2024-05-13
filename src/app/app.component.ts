@@ -18,6 +18,7 @@ import {MatTabsModule} from '@angular/material/tabs';
 import {MatExpansionModule} from '@angular/material/expansion';
 import { ColorScheme, PlayerTokenComponent, PlayerTokenData } from './renderer/entities/player-token/player-token.component';
 import { TEntity } from './renderer/entities/entity';
+import {MatSlideToggleModule} from '@angular/material/slide-toggle';
 
 @Component({
   selector: 'app-root',
@@ -30,6 +31,7 @@ import { TEntity } from './renderer/entities/entity';
     MatIconModule,
     MatProgressBarModule,
     MatTabsModule,
+    MatSlideToggleModule,
     MatExpansionModule]
 })
 export class AppComponent {
@@ -79,8 +81,8 @@ export class AppComponent {
       
       const arc = 2 * Math.PI * (i+4) / 8;
       const r = 0.15;
-          
-      board.entities.unshift({
+      
+      const entity = {
         tags: ['player', role],
         x: Math.sin(arc) * r,
         y: Math.cos(arc) * r + 0.3,
@@ -91,7 +93,10 @@ export class AppComponent {
           color: color,
           name: names[i]
         }
-      } as TEntity<PlayerTokenData>);
+      } as TEntity<PlayerTokenData>;
+      
+      board.players.push(entity);
+      board.entities.unshift(entity);
     }
   }
 

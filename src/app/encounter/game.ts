@@ -402,7 +402,8 @@ class GameAiControl implements AiControl {
     }
     
     public hasControl(entity: EntityRef) {
-        return !this.ctx.board.playerControlledEntities.includes(getEntityByRef(entity));
+        const e = getEntityByRef(entity) as TEntity<PlayerTokenData>;
+        return !e.data.draggable;
     }
     
     async moveNpc(entityRef: EntityRef, c: MoveConfig) {
@@ -539,12 +540,12 @@ export function setupEncouter(board: EncounterBoard, encounter: Encounter, ai: N
     
     function setupPlayerControl() {
         console.log("control setup");
-        const players = runControl.getEntitiesByTags(["player"]);
+        /* const players = runControl.getEntitiesByTags(["player"]);
         
         for(const player of players) {
             const entity = getEntityByRef(player) as TEntity<PlayerTokenData>;
             entity.data.draggable = board.playerControlledEntities.includes(entity);
-        }
+        } */
         
         
         /* for (const [i, player] of players.entries()) {

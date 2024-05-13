@@ -43,8 +43,14 @@
             Player & AI Control
           </mat-panel-title>
         </mat-expansion-panel-header>
-        @if(board) {
-          test
+        @if(board; as b) {
+          @for (item of b.players; track item) {
+            <div style="padding: 5px;">
+              <mat-slide-toggle [(ngModel)]="item.data.draggable">{{ item.name }}</mat-slide-toggle>
+            </div>
+          } @empty {
+            <li>There are no items.</li>
+          }
         }
       </mat-expansion-panel>
       
@@ -56,7 +62,7 @@
           </mat-panel-title>
         </mat-expansion-panel-header>
         <div>
-          <button mat-button>Load last run RNG</button>
+          <button [disabled]="true" mat-button>Load last run RNG</button>
         </div>
       </mat-expansion-panel>
     </mat-accordion>
