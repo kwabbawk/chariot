@@ -398,11 +398,11 @@ class GameAiControl implements AiControl {
     }
     
     public getNpcs() {
-        return this.runControl.getEntitiesByTags(["player", "npc"]);
+        return this.getPlayers().filter(x => this.hasControl(x));
     }
     
     public hasControl(entity: EntityRef) {
-        return getEntityByRef(entity).tags.includes("npc");
+        return !this.ctx.board.playerControlledEntities.includes(getEntityByRef(entity));
     }
     
     async moveNpc(entityRef: EntityRef, c: MoveConfig) {
@@ -540,7 +540,14 @@ export function setupEncouter(board: EncounterBoard, encounter: Encounter, ai: N
     function setupPlayerControl() {
         console.log("control setup");
         const players = runControl.getEntitiesByTags(["player"]);
-        for (const [i, player] of players.entries()) {
+        
+        for(const player of players) {
+            const entity = getEntityByRef(player) as TEntity<PlayerTokenData>;
+            entity.data.draggable = board.playerControlledEntities.includes(entity);
+        }
+        
+        
+        /* for (const [i, player] of players.entries()) {
             if (player.name != "MT") {
                 getEntityByRef(player).tags.push("npc");
                 console.log("npc", player);
@@ -549,7 +556,7 @@ export function setupEncouter(board: EncounterBoard, encounter: Encounter, ai: N
                 const token = player as TEntity<PlayerTokenData>;
                 token.data.draggable = true;
             }
-        }
+        } */
     }
     
     setupPlayerControl();
