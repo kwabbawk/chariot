@@ -125,7 +125,7 @@ export class P9sHectorJpAi implements NpcAi {
         
             
         combineLatest([newLimitCuts.pipe(filter(x => x.n == 1)), newLimitCuts.pipe(filter(x => x.n == 3))])
-        .pipe(first())
+        .pipe(take(1))
         .subscribe({
             next: async x => {
                 const lc1 = x[0].enitity.attachedTo!;

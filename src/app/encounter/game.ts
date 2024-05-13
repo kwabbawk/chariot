@@ -41,7 +41,12 @@ export enum EntityLayers {
     Player,
 }
 
-class EncounterStoppedError extends Error {
+export class EncounterBoard {
+    public playerControlledEntities: Entity[] = [];
+    public entities: Entity[] = [];
+}
+
+export class EncounterStoppedError extends Error {
     
     public GameErrorType = "EncounterStoppedError";
 }
@@ -74,7 +79,7 @@ export interface RunningEncounterContext {
     playbackStop$: Subject<void>;
     speed: number;
     phases: Runnable[];
-    renderer: RendererComponent;
+    board: EncounterBoard;
     encounterEnd: Subject<void>;
     gameTicks: Observable<void>;
     castBarEvents$: Subject<CastBarEvent>;
@@ -99,7 +104,7 @@ class GameSetupControl implements SetupControl {
             tags: [],
             layer: EntityLayers.Enemy
         } as TEntity<EnemyTokenData>;
-        insertLayered(this.ctx.renderer.entities, entity);
+        insertLayered(this.ctx.board.entities, entity);
         // renderer.entities.unshift(entity);
         return entity;
     }
@@ -307,7 +312,7 @@ class GameRunControl implements RunControl {
         entity.y = c.y;
         entity.rotation = c.rotation;
         // renderer.entities.unshift(entity);
-        insertLayered(this.ctx.renderer.entities, entity);
+        insertLayered(this.ctx.board.entities, entity);
         this.ctx.entityEvents$.next({
             entity: entity,
             eventType: EntityEventType.Placed
@@ -351,7 +356,7 @@ class GameRunControl implements RunControl {
             }
             
         }
-        removeRecursive(this.ctx.renderer.entities);
+        removeRecursive(this.ctx.board.entities);
     }
     
     public getEntitiesByTags(tags: string[]) {
@@ -368,7 +373,7 @@ class GameRunControl implements RunControl {
             }
             
         }
-        rec(this.ctx.renderer.entities);
+        rec(this.ctx.board.entities);
         return found;
     }
 }
@@ -472,9 +477,7 @@ class GamePlaybackControl implements PlaybackControl {
 }
 
 
-export function setupEncouter(renderer: RendererComponent, encounter: Encounter, ai: NpcAi, speed = 1) {
-    
-    
+export function setupEncouter(board: EncounterBoard, encounter: Encounter, ai: NpcAi, speed = 1) {
     
     const makeCtx = () => {
         
@@ -500,7 +503,7 @@ export function setupEncouter(renderer: RendererComponent, encounter: Encounter,
         
         const ctx = {
             phases: [],
-            renderer,
+            board,
             encounterEnd,
             gameTicks,
             currentTimeSegmentStartedAt,
@@ -556,6 +559,7 @@ export function setupEncouter(renderer: RendererComponent, encounter: Encounter,
     
     setupPlayerControl();
     
+    
     ai.setup(aiControl);
     
     
@@ -572,7 +576,7 @@ export function setupEncouter(renderer: RendererComponent, encounter: Encounter,
             }
         }
         
-        ctx.encounterEnd.complete();
+        ctx.encounterEnd.next();
         console.log('encounter done!');
     })();
     

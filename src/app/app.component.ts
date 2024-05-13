@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { RendererComponent } from "./renderer/renderer.component";
 import { RunFunc } from "./encounter/interface/Encounter";
 import { RunControl } from "./encounter/interface/RunControl";
-import { PlaybackControl, setupEncouter } from './encounter/game';
+import { EncounterBoard, EntityLayers, PlaybackControl, setupEncouter } from './encounter/game';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormField, MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
@@ -13,6 +13,10 @@ import { ProgressSpinnerMode, MatProgressSpinnerModule } from '@angular/material
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatIconModule } from '@angular/material/icon';
 import { GetEncounter } from './encounter/encounters/p9s';
+import {MatTabsModule} from '@angular/material/tabs';
+import {MatExpansionModule} from '@angular/material/expansion';
+import { ColorScheme, PlayerTokenComponent, PlayerTokenData } from './renderer/entities/player-token/player-token.component';
+import { TEntity } from './renderer/entities/entity';
 
 @Component({
   selector: 'app-root',
@@ -23,27 +27,69 @@ import { GetEncounter } from './encounter/encounters/p9s';
     MatFormFieldModule, FormsModule, MatButtonModule, MatProgressSpinnerModule,
     MatIconButton,
     MatIconModule,
-    MatProgressBarModule]
+    MatProgressBarModule,
+    MatTabsModule,
+    MatExpansionModule]
 })
 export class AppComponent {
   
-  
   public paused = false;
+  
 
 
   public speed = 1;
   public playbackControl?: PlaybackControl;
+  
+  @HostListener('window:onunhandledrejections', ['$event'])
+  globalErrorHandling(event: PromiseRejectionEvent) {
+    console.log('uncaught promise event!', event);
+  }
+  
 
 
   async start(r: RendererComponent) {
     r.reset();
+    const board = new EncounterBoard();
     const encounter = GetEncounter();
     const ai = new P9sHectorJpAi();
-
-    const { playbackControl, runningEncounter } = setupEncouter(r, encounter, ai, this.speed);
+    this.createFullParty(board);
+    r.entities = board.entities;
+    const { playbackControl, runningEncounter } = setupEncouter(board, encounter, ai, this.speed);
     this.playbackControl = playbackControl;
     await runningEncounter;
+    r.reset();
     this.playbackControl = undefined;
+    
+  }
+  
+  createFullParty(board: EncounterBoard) {
+    const names = [
+      "MT", "OT", "H1", "H2", "M1", "M2", "R1", "R2"
+    ];
+    
+    for (let i = 0; i < 8; i++) {
+      const [color, role] = i < 2 
+        ? [ColorScheme.Tank, 'tank']
+        : i < 4
+          ? [ColorScheme.Healer, 'healer']
+          : [ColorScheme.Dps, 'dps']
+      
+      const arc = 2 * Math.PI * (i+4) / 8;
+      const r = 0.15;
+          
+      board.entities.unshift({
+        tags: ['player', role],
+        x: Math.sin(arc) * r,
+        y: Math.cos(arc) * r + 0.3,
+        component: PlayerTokenComponent,
+        name: names[i],
+        layer: EntityLayers.Player,
+        data: {
+          color: color,
+          name: names[i]
+        }
+      } as TEntity<PlayerTokenData>);
+    }
   }
 
   doTheTest() {
@@ -60,7 +106,7 @@ export class AppComponent {
     const getPassedTime = () => (new Date().getTime() - start) / 1000;
     
     
-    const {playbackControl, runningEncounter} = setupEncouter(r, {
+    const {playbackControl, runningEncounter} = setupEncouter(new EncounterBoard(), {
       setup(c) {
         c.addPhase({
           name: "testPhase",

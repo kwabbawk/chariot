@@ -33,9 +33,6 @@ export class RendererComponent {
   
   reset() {
     this.entities = [];
-    this.createFullParty();
-    // this.createBoss();
-    
   }
   
   createBoss() {
@@ -49,37 +46,6 @@ export class RendererComponent {
         size: 0.18
       }
     } as TEntity<EnemyTokenData>);
-  }
-  
-  createFullParty() {
-    
-    const names = [
-      "MT", "OT", "H1", "H2", "M1", "M2", "R1", "R2"
-    ];
-    
-    for (let i = 0; i < 8; i++) {
-      const [color, role] = i < 2 
-        ? [ColorScheme.Tank, 'tank']
-        : i < 4
-          ? [ColorScheme.Healer, 'healer']
-          : [ColorScheme.Dps, 'dps']
-      
-      const arc = 2 * Math.PI * (i+4) / 8;
-      const r = 0.15;
-          
-      this.entities.unshift({
-        tags: ['player', role],
-        x: Math.sin(arc) * r,
-        y: Math.cos(arc) * r + 0.3,
-        component: PlayerTokenComponent,
-        name: names[i],
-        layer: EntityLayers.Player,
-        data: {
-          color: color,
-          name: names[i]
-        }
-      } as TEntity<PlayerTokenData>);
-    }
   }
   
   down($event: MouseEvent) {
