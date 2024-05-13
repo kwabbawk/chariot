@@ -1,4 +1,4 @@
-import { Component, HostListener } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { RendererComponent } from "./renderer/renderer.component";
 import { RunFunc } from "./encounter/interface/Encounter";
@@ -36,31 +36,33 @@ export class AppComponent {
   
   public paused = false;
   
-
+  public cdr = inject(ChangeDetectorRef);
 
   public speed = 1;
   public playbackControl?: PlaybackControl;
+  public board?: EncounterBoard;
   
   @HostListener('window:onunhandledrejections', ['$event'])
   globalErrorHandling(event: PromiseRejectionEvent) {
     console.log('uncaught promise event!', event);
   }
   
+  constructor() {
+    this.startPaused();
+  }
+  
 
-
-  async start(r: RendererComponent) {
-    r.reset();
+  async startPaused() {
     const board = new EncounterBoard();
+    this.board = board;
     const encounter = GetEncounter();
     const ai = new P9sHectorJpAi();
     this.createFullParty(board);
-    r.entities = board.entities;
     const { playbackControl, runningEncounter } = setupEncouter(board, encounter, ai, this.speed);
+    playbackControl.pause();
     this.playbackControl = playbackControl;
+    this.cdr.detectChanges();
     await runningEncounter;
-    r.reset();
-    this.playbackControl = undefined;
-    
   }
   
   createFullParty(board: EncounterBoard) {

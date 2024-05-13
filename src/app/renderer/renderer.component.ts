@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, Input, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Entity, TEntity } from './entities/entity';
 import { CommonModule } from '@angular/common';
@@ -19,10 +19,13 @@ export class RendererComponent {
   public cy = 0;
   public visible = true;
   
+  @Input()
   public entities: Entity[] = [];
   
   @ViewChild('svg')
   public viewSvg!: ElementRef;
+  
+  
   
   
   constructor() {

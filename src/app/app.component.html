@@ -1,7 +1,7 @@
 <mat-tab-group>
   <mat-tab label="Playback">
     <div>
-      <app-renderer #renderer></app-renderer>
+      <app-renderer #renderer [entities]="board?.entities ?? []"></app-renderer>
       <hr>
       <div>
         <mat-form-field>
@@ -12,7 +12,7 @@
       <div style="flex-direction: row; display: flex; justify-content: center;">
         <div style="width: 200px; display: flex; flex-direction: row; justify-content: space-between;">
           @if (!playbackControl) {
-            <button mat-fab (click)="start(renderer)">
+            <button mat-fab (click)="startPaused()">
               <mat-icon>play_arrow</mat-icon>
             </button>
           } @else {
@@ -25,8 +25,8 @@
                 <mat-icon>play_arrow</mat-icon>
               </button>
             }
-            <button mat-fab (click)="playbackControl.stop(); playbackControl = undefined">
-              <mat-icon>stop</mat-icon>
+            <button mat-fab (click)="playbackControl.stop(); startPaused();">
+              <mat-icon>undo</mat-icon>
             </button>
           }
         </div>
@@ -43,6 +43,9 @@
             Player & AI Control
           </mat-panel-title>
         </mat-expansion-panel-header>
+        @if(board) {
+          test
+        }
       </mat-expansion-panel>
       
       <!-- RngFixing -->
