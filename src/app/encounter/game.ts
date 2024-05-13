@@ -19,6 +19,7 @@ import { LimitCutConfig, LimitCutIconComponent } from "../renderer/entities/limi
 import { AiControl, CastBarEvent, CastBarEventType, EntityEvent, EntityEventType, MoveConfig, NpcAi } from "./encounters/p9s.ai";
 import { vectorLen } from "../lib/vector";
 import { PlayerTokenData } from "../renderer/entities/player-token/player-token.component";
+import { EncounterBoard } from "./EncounterBoard";
 
 function completionPromiseOf<T>(o: Observable<T>): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -39,11 +40,6 @@ export enum EntityLayers {
     Enemy,
     Effect,
     Player,
-}
-
-export class EncounterBoard {
-    public playerControlledEntities: Entity[] = [];
-    public entities: Entity[] = [];
 }
 
 export class EncounterStoppedError extends Error {

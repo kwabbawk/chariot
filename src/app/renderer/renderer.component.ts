@@ -1,11 +1,9 @@
-import { AfterViewInit, Component, ElementRef, EnvironmentInjector, HostListener, OnInit, ViewChild, ViewContainerRef, createComponent, inject } from '@angular/core';
+import { Component, ElementRef, HostListener, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Entity, TEntity } from './entities/entity';
 import { CommonModule } from '@angular/common';
-import { ColorScheme, PlayerTokenComponent, PlayerTokenData } from './entities/player-token/player-token.component';
-import { timeout } from 'rxjs';
+import { PlayerTokenComponent } from './entities/player-token/player-token.component';
 import { EnemyTokenComponent, EnemyTokenData } from './entities/enemy-token/enemy-token.component';
-import { EntityLayers } from '../encounter/game';
 
 @Component({
     selector: 'app-renderer',
