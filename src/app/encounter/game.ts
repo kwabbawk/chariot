@@ -2,7 +2,6 @@ import { NEVER, Observable, Subject, interval, lastValueFrom, map, merge, of, sh
 import { CastBarComponent, CastBarData } from "../renderer/entities/cast-bar/cast-bar.component";
 import { EnemyTokenComponent, EnemyTokenData } from "../renderer/entities/enemy-token/enemy-token.component";
 import { Entity, TEntity } from "../renderer/entities/entity";
-import { RendererComponent } from "../renderer/renderer.component";
 import { Encounter, EntityRef, RunFunc, Runnable } from "./interface/Encounter";
 import { RunControl } from "./interface/RunControl";
 import { EntityPlacementConfig } from "./interface/EntityPlacementConfig";
